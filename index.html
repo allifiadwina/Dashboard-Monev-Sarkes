@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Monev Sarkes</title>
+<style>
+:root {
+  --navy: #17365d;
+  --blue: #2864dc;
+  --bg: #f4f7fb;
+  --text: #243247;
+  --muted: #718096;
+  --line: #e5eaf2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  background: var(--navy);
+  color: white;
+  padding: 24px 5%;
+}
+header .eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  opacity: .75;
+}
+header h1 { margin: 8px 0; font-size: 27px; }
+header p { margin: 0; opacity: .8; font-size: 14px; }
+main { max-width: 1400px; margin: auto; padding: 25px 4%; }
+.toolbar, .panel, .kpi {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+.toolbar {
+  padding: 17px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 13px;
+  margin-bottom: 20px;
+}
+.field { flex: 1; min-width: 145px; }
+label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+input, select, button {
+  font: inherit;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+input, select {
+  width: 100%;
+  border: 1px solid #dce3ed;
+  background: white;
+  color: var(--text);
+}
+button {
+  border: 0;
+  cursor: pointer;
+  background: var(--blue);
+  color: white;
+  font-weight: 600;
+}
+button.secondary { background: #eaf0ff; color: var(--blue); }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.kpi { padding: 19px; }
+.kpi .name { color: var(--muted); font-size: 13px; }
+.kpi .number { font-size: 29px; font-weight: 750; margin: 12px 0 5px; }
+.kpi .note { font-size: 12px; color: var(--muted); }
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.panel { padding: 20px; min-width: 0; }
+.panel h2 { margin: 0 0 5px; font-size: 17px; }
+.subtitle { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+.chart { width: 100%; height: 255px; display: block; }
+.table-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+.table-head h2 { margin: 0; font-size: 17px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td {
+  padding: 13px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+th {
+  background: #f7f9fc;
+  color: #63718a;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  background: #e7f7ee;
+  color: #197447;
+}
+.status.pending { background: #fff2d7; color: #936000; }
+footer { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; }
+.empty { padding: 25px; text-align: center; color: var(--muted); }
+@media(max-width: 800px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content-grid { grid-template-columns: 1fr; }
+}
+@media(max-width: 460px) {
+  header h1 { font-size: 22px; }
+  .kpi { padding: 14px; }
+  .kpi .number { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">MONITORING & EVALUASI</div>
+  <h1>Dashboard Monev Sarkes</h1>
+  <p>Monitoring dan evaluasi sarana kesehatan penempatan pekerja migran Indonesia</p>
+</header>
+
+<main>
+  <section class="toolbar">
+    <div class="field">
+      <label for="regionFilter">Wilayah</label>
+      <select id="regionFilter">
+        <option value="">Semua wilayah</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="statusFilter">Status monitoring</label>
+      <select id="statusFilter">
+        <option value="">Semua status</option>
+        <option value="Selesai">Selesai</option>
+        <option value="Dalam Proses">Dalam Proses</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="searchInput">Cari sarana / wilayah</label>
+      <input id="searchInput" placeholder="Ketik kata kunci...">
+    </div>
+    <button class="secondary" id="resetBtn">Reset filter</button>
+    <button id="uploadBtn">Impor CSV</button>
+    <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+  </section>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="name">Total Sarana</div>
+      <div class="number" id="totalKpi">0</div>
+      <div class="note">Sesuai filter aktif</div>
+    </div>
+    <div class="kpi">
+      <div class="name">Monitoring Selesai</div>
+      <div class="number" id="doneKpi">0</div>
+      <div class="note">Sarana berstatus selesai</div>
+    </div>
+    <div class="kpi">
+      <div class="name">Dalam Proses</div>
+      <div class="number" id="pendingKpi">0</div>
+      <div class="note">Perlu tindak lanjut</div>
+    </div>
+    <div class="kpi">
+      <div class="name">Persentase Selesai</div>
+      <div class="number" id="rateKpi">0%</div>
+      <div class="note">Selesai dibanding total sarana</div>
+    </div>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel">
+      <h2>Monitoring per Wilayah</h2>
+      <div class="subtitle">Perbandingan sarana selesai dan dalam proses</div>
+      <canvas class="chart" id="regionChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Komposisi Status</h2>
+      <div class="subtitle">Proporsi status monitoring pada data terfilter</div>
+      <canvas class="chart" id="statusChart"></canvas>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="table-head">
+      <div>
+        <h2>Data Monitoring Sarana Kesehatan</h2>
+        <div class="subtitle" style="margin:6px 0 0">Data contoh dapat diganti dengan impor CSV.</div>
+      </div>
+      <button class="secondary" id="exportBtn">Ekspor CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Nama Sarana</th>
+            <th>Wilayah</th>
+            <th>Tanggal</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>Dashboard Monev Sarkes · Prototipe awal</footer>
+
+<script>
+const sampleData = [
+  {nama:"Sarana Kesehatan A", wilayah:"DKI Jakarta", tanggal:"2026-01-15", status:"Selesai"},
+  {nama:"Sarana Kesehatan B", wilayah:"Jawa Barat", tanggal:"2026-01-20", status:"Dalam Proses"},
+  {nama:"Sarana Kesehatan C", wilayah:"Jawa Tengah", tanggal:"2026-02-02", status:"Selesai"},
+  {nama:"Sarana Kesehatan D", wilayah:"Jawa Timur", tanggal:"2026-02-10", status:"Dalam Proses"},
+  {nama:"Sarana Kesehatan E", wilayah:"DKI Jakarta", tanggal:"2026-03-05", status:"Selesai"},
+  {nama:"Sarana Kesehatan F", wilayah:"Jawa Barat", tanggal:"2026-03-11", status:"Selesai"},
+  {nama:"Sarana Kesehatan G", wilayah:"Banten", tanggal:"2026-04-08", status:"Dalam Proses"},
+  {nama:"Sarana Kesehatan H", wilayah:"Jawa Tengah", tanggal:"2026-04-19", status:"Selesai"}
+];
+
+let data = [...sampleData];
+
+const $ = id => document.getElementById(id);
+const regionFilter = $("regionFilter");
+const statusFilter = $("statusFilter");
+const searchInput = $("searchInput");
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[char]);
+}
+
+function filteredData() {
+  const region = regionFilter.value;
+  const status = statusFilter.value;
+  const q = searchInput.value.toLowerCase().trim();
+  return data.filter(row =>
+    (!region || row.wilayah === region) &&
+    (!status || row.status === status) &&
+    (!q || (row.nama + " " + row.wilayah).toLowerCase().includes(q))
+  );
+}
+
+function populateRegions() {
+  const selected = regionFilter.value;
+  const regions = [...new Set(data.map(row => row.wilayah))].sort();
+  regionFilter.innerHTML = '<option value="">Semua wilayah</option>' +
+    regions.map(r => `<option value="${escapeHTML(r)}">${escapeHTML(r)}</option>`).join("");
+  if (regions.includes(selected)) regionFilter.value = selected;
+}
+
+function drawBarChart(canvas, labels, seriesA, seriesB) {
+  const ctx = canvas.getContext("2d");
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0, 0, width, height);
+
+  const left = 35, right = 12, top = 12, bottom = 42;
+  const chartW = width - left - right;
+  const chartH = height - top - bottom;
+  const maxVal = Math.max(1, ...seriesA, ...seriesB);
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#718096";
+
+  for (let i = 0; i <= 4; i++) {
+    const y = top + chartH - chartH * i / 4;
+    ctx.strokeStyle = "#e8edf4";
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width-right, y); ctx.stroke();
+    ctx.fillText(String(Math.round(maxVal*i/4)), left-7, y+4);
+  }
+
+  const groupW = chartW / Math.max(1, labels.length);
+  const barW = Math.min(22, groupW * .27);
+  labels.forEach((label, i) => {
+    const x = left + groupW * (i + .5);
+    const h1 = chartH * seriesA[i] / maxVal;
+    const h2 = chartH * seriesB[i] / maxVal;
+    ctx.fillStyle = "#2864dc";
+    ctx.fillRect(x - barW - 2, top + chartH - h1, barW, h1);
+    ctx.fillStyle = "#f0b64b";
+    ctx.fillRect(x + 2, top + chartH - h2, barW, h2);
+    ctx.fillStyle = "#718096";
+    ctx.textAlign = "center";
+    ctx.fillText(label.length > 10 ? label.slice(0,9)+"…" : label, x, height-20);
+  });
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#2864dc"; ctx.fillRect(left, height-10, 9, 9);
+  ctx.fillStyle = "#526176"; ctx.fillText("Selesai", left+13, height-2);
+  ctx.fillStyle = "#f0b64b"; ctx.fillRect(left+75, height-10, 9, 9);
+  ctx.fillStyle = "#526176"; ctx.fillText("Dalam proses", left+88, height-2);
+}
+
+function drawStatusChart(canvas, done, pending) {
+  const ctx = canvas.getContext("2d");
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = width * ratio; canvas.height = height * ratio;
+  ctx.scale(ratio, ratio); ctx.clearRect(0,0,width,height);
+
+  const total = done + pending;
+  const cx = width/2, cy = height/2-15, radius = Math.min(width*.24, height*.31);
+  let angle = -Math.PI/2;
+  const slices = [
+    {value:done, color:"#2864dc"},
+    {value:pending, color:"#f0b64b"}
+  ];
+  if (!total) {
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
+    ctx.strokeStyle="#e8edf4"; ctx.lineWidth=24; ctx.stroke();
+  } else {
+    slices.forEach(slice => {
+      const next = angle + Math.PI*2*slice.value/total;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,radius,angle,next);
+      ctx.closePath(); ctx.fillStyle=slice.color; ctx.fill(); angle=next;
+    });
+    ctx.fillStyle="#243247"; ctx.textAlign="center";
+    ctx.font="bold 25px sans-serif"; ctx.fillText(total,cx,cy+5);
+    ctx.font="12px sans-serif"; ctx.fillStyle="#718096";
+    ctx.fillText("Total",cx,cy+23);
+  }
+
+  const legendY = height-27;
+  ctx.fillStyle="#2864dc"; ctx.fillRect(width/2-83,legendY,10,10);
+  ctx.fillStyle="#526176"; ctx.font="12px sans-serif"; ctx.textAlign="left";
+  ctx.fillText("Selesai",width/2-68,legendY+9);
+  ctx.fillStyle="#f0b64b"; ctx.fillRect(width/2+5,legendY,10,10);
+  ctx.fillStyle="#526176"; ctx.fillText("Dalam proses",width/2+20,legendY+9);
+}
+
+function render() {
+  const rows = filteredData();
+  const done = rows.filter(r => r.status === "Selesai").length;
+  const pending = rows.filter(r => r.status === "Dalam Proses").length;
+  $("totalKpi").textContent = rows.length;
+  $("doneKpi").textContent = done;
+  $("pendingKpi").textContent = pending;
+  $("rateKpi").textContent = (rows.length ? Math.round(done/rows.length*100) : 0) + "%";
+
+  $("dataTable").innerHTML = rows.length ? rows.map((row,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${escapeHTML(row.nama)}</td>
+      <td>${escapeHTML(row.wilayah)}</td>
+      <td>${escapeHTML(row.tanggal)}</td>
+      <td><span class="status ${row.status === "Selesai" ? "" : "pending"}">${escapeHTML(row.status)}</span></td>
+    </tr>`).join("") :
+    '<tr><td colspan="5" class="empty">Tidak ada data yang sesuai filter.</td></tr>';
+
+  const regions = [...new Set(rows.map(r => r.wilayah))];
+  drawBarChart($("regionChart"), regions,
+    regions.map(region => rows.filter(r => r.wilayah === region && r.status === "Selesai").length),
+    regions.map(region => rows.filter(r => r.wilayah === region && r.status === "Dalam Proses").length)
+  );
+  drawStatusChart($("statusChart"), done, pending);
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
+  if (lines.length < 2) throw new Error("File CSV tidak memiliki baris data.");
+  function splitLine(line) {
+    const result = []; let value = "", quoted = false;
+    for (let i=0; i<line.length; i++) {
+      const c = line[i];
+      if (c === '"' && line[i+1] === '"' && quoted) { value += '"'; i++; }
+      else if (c === '"') quoted = !quoted;
+      else if (c === "," && !quoted) { result.push(value.trim()); value=""; }
+      else value += c;
+    }
+    result.push(value.trim());
+    return result;
+  }
+  const headers = splitLine(lines[0]).map(h => h.toLowerCase().trim());
+  const find = names => headers.findIndex(h => names.includes(h));
+  const ni = find(["nama","nama sarana","sarana","nama fasilitas"]);
+  const wi = find(["wilayah","provinsi","kabupaten/kota","lokasi"]);
+  const ti = find(["tanggal","tanggal monitoring","tanggal monev"]);
+  const si = find(["status","status monitoring"]);
+  if (ni < 0 || wi < 0 || si < 0)
+    throw new Error("Kolom wajib belum ditemukan. Gunakan header: nama, wilayah, tanggal, status.");
+  return lines.slice(1).filter(line => line.trim()).map(line => {
+    const c = splitLine(line);
+    const rawStatus = (c[si] || "").toLowerCase();
+    return {
+      nama: c[ni] || "Tanpa nama",
+      wilayah: c[wi] || "Tidak diketahui",
+      tanggal: ti >= 0 ? c[ti] || "-" : "-",
+      status: /selesai|complete|completed/.test(rawStatus) ? "Selesai" : "Dalam Proses"
+    };
+  });
+}
+
+[regionFilter,statusFilter,searchInput].forEach(el =>
+  el.addEventListener("input", render)
+);
+$("resetBtn").addEventListener("click", () => {
+  regionFilter.value = ""; statusFilter.value = ""; searchInput.value = ""; render();
+});
+$("uploadBtn").addEventListener("click", () => $("csvFile").click());
+$("csvFile").addEventListener("change", async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    data = parseCSV(await file.text());
+    populateRegions(); render();
+    alert("Data CSV berhasil dimuat ke dashboard ini.");
+  } catch (error) {
+    alert(error.message);
+  }
+  event.target.value = "";
+});
+$("exportBtn").addEventListener("click", () => {
+  const rows = filteredData();
+  const csv = [
+    ["nama","wilayah","tanggal","status"],
+    ...rows.map(r => [r.nama,r.wilayah,r.tanggal,r.status])
+  ].map(row => row.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "data-monev-sarkes.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
+
+populateRegions();
+render();
+window.addEventListener("resize", render);
+</script>
+</body>
+</html>
